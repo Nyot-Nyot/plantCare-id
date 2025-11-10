@@ -16,10 +16,10 @@
 
 ### 1. Setup Flutter Project with Riverpod
 
--   [ ] Install Flutter SDK and create new project: `flutter create plantcare_id`
--   [ ] Add Riverpod dependency: `flutter pub add riverpod`
--   [ ] Setup basic project structure (lib/, assets/, etc.)
--   [ ] Configure main.dart with ProviderScope
+-   [x] Install Flutter SDK and create new project: `flutter create .`
+-   [x] Add Riverpod dependency: `flutter pub add riverpod` (implemented as `flutter_riverpod` in `pubspec.yaml`)
+-   [x] Setup basic project structure (lib/, assets/, etc.)
+-   [x] Configure main.dart with ProviderScope
 
 ### 2. Integrasi Supabase untuk Auth dan DB
 

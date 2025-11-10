@@ -63,8 +63,8 @@ Workflow ini berdasarkan docs di folder `docs/`. Ikuti langkah-langkah ini untuk
 -   Jika proyek menyediakan file contoh konfigurasi, salin lalu sesuaikan:
     -   `cp .env.example .env` dan edit `.env`
 -   Buat branch baru untuk setiap sprint/pekerjaan agar perubahan terisolasi:
-    -   Buat branch: `git checkout -b sprint-1`
-    -   Push ke remote: `git push -u origin sprint-1`
+    -   Buat branch: `git checkout -b sprint1-task1`
+    -   Push ke remote: `git push -u origin sprint1-task1`
     -   Kerjakan sprint
     -   Saat selesai, buat Pull Request dan review sebelum merge ke `main`
 
@@ -89,7 +89,7 @@ Workflow ini berdasarkan docs di folder `docs/`. Ikuti langkah-langkah ini untuk
 
     ### 1. Setup Flutter Project with Riverpod
 
-    [ ] Install Flutter SDK and create new project: `flutter create plantcare_id`
+    [ ] Install Flutter SDK and create new project: `flutter create .`
     [ ] Add Riverpod dependency: `flutter pub add riverpod`
     [ ] Setup basic project structure (lib/, assets/, etc.)
     [ ] Configure main.dart with ProviderScope
