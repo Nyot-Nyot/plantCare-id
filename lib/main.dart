@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'services/supabase_client.dart';
 
 Future<void> main() async {
@@ -16,13 +16,18 @@ Future<void> main() async {
   final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
 
   if (supabaseUrl != null && supabaseAnonKey != null) {
-    await SupabaseClientService.init(url: supabaseUrl, anonKey: supabaseAnonKey);
+    await SupabaseClientService.init(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+    );
   } else {
     // If keys are missing we'll continue without initializing Supabase to
     // avoid crashing the app. The docs/setup_supabase.md explains how to
     // create the .env file with the proper values.
     // ignore: avoid_print
-    print('SUPABASE_URL or SUPABASE_ANON_KEY not found in .env; Supabase not initialized.');
+    print(
+      'SUPABASE_URL or SUPABASE_ANON_KEY not found in .env; Supabase not initialized.',
+    );
   }
 
   runApp(const ProviderScope(child: MyApp()));
