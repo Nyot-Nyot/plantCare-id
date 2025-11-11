@@ -2,6 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../theme/colors.dart';
+import '../../theme/text_styles.dart';
+
+// Local sizing and spacing tokens for this screen — avoid magic numbers.
+class _AuthTokens {
+  _AuthTokens._();
+
+  static const double heroHeight = 342;
+  static const double iconBoxSize = 64;
+  static const double iconSize = 32;
+  static const double cardRadius = 24;
+  static const double fieldRadius = 16;
+  static const double horizontalPadding = 24;
+  static const double spacingLarge = 32;
+  static const double spacingMedium = 16;
+  static const double spacingSmall = 8;
+  static const double buttonHeight = 48;
+  static const Color dividerColor = Color(0xFFE8F8F5);
+}
+
+// Small helper to render the rounded input background used across fields.
+class _DecoratedField extends StatelessWidget {
+  final Widget child;
+  const _DecoratedField({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: _AuthTokens.buttonHeight,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(_AuthTokens.fieldRadius),
+        border: Border.all(color: _AuthTokens.dividerColor, width: 1.2),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      alignment: Alignment.centerLeft,
+      child: child,
+    );
+  }
+}
 
 /// Auth screen redesigned to mirror the Figma layout: top hero image with
 /// gradient overlay, centered brand icon, title/subtitle, and a rounded
@@ -49,14 +89,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final green = const Color(0xFF27AE60);
+    final green = AppColors.primary;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bg,
       body: Stack(
         children: [
           // Local hero image with reduced opacity (bundled asset)
           SizedBox(
-            height: 342,
+            height: _AuthTokens.heroHeight,
             width: double.infinity,
             child: Image.asset(
               'assets/Hero.webp',
@@ -67,7 +107,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
           // Gradient overlay
           Container(
-            height: 342,
+            height: _AuthTokens.heroHeight,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -84,11 +124,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 // Centered brand icon
                 Center(
                   child: Container(
-                    width: 64,
-                    height: 64,
+                    width: _AuthTokens.iconBoxSize,
+                    height: _AuthTokens.iconBoxSize,
                     decoration: BoxDecoration(
                       color: green,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(
+                        _AuthTokens.fieldRadius,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withAlpha((0.1 * 255).round()),
@@ -100,38 +142,46 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     child: const Center(
                       child: Icon(
                         Icons.eco_outlined,
-                        color: Colors.white,
-                        size: 32,
+                        color: AppColors.onPrimary,
+                        size: _AuthTokens.iconSize,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
+                const SizedBox(height: _AuthTokens.spacingSmall),
+                Text(
                   'Tanam.in',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF2C3E50)),
+                  style: AppTextStyles.h3.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                const SizedBox(height: _AuthTokens.spacingSmall),
+                Text(
                   'Selamat datang kembali! 🌿',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF5D6D7E)),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: _AuthTokens.spacingLarge),
 
                 // Card containing form
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: _AuthTokens.horizontalPadding,
+                  ),
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
+                      color: AppColors.bg,
+                      borderRadius: BorderRadius.circular(
+                        _AuthTokens.cardRadius,
+                      ),
                       border: Border.all(
                         color: const Color(0xFFECF0F1),
                         width: 1.2,
                       ),
                     ),
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                    padding: EdgeInsets.all(_AuthTokens.horizontalPadding),
                     child: Column(
                       children: [
                         Form(
@@ -139,28 +189,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text(
+                              Text(
                                 'Email',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF2C3E50),
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF6F8F9),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(0xFFE8F8F5),
-                                    width: 1.2,
-                                  ),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                alignment: Alignment.centerLeft,
+                              const SizedBox(height: _AuthTokens.spacingSmall),
+                              _DecoratedField(
                                 child: TextFormField(
                                   controller: _emailController,
                                   decoration: const InputDecoration(
@@ -174,16 +210,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       : null,
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: _AuthTokens.spacingMedium),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Kata Sandi',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xFF2C3E50),
+                                    style: AppTextStyles.body.copyWith(
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                   TextButton(
@@ -195,20 +230,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   ),
                                 ],
                               ),
-                              Container(
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF6F8F9),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(0xFFE8F8F5),
-                                    width: 1.2,
-                                  ),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                alignment: Alignment.centerLeft,
+                              _DecoratedField(
                                 child: TextFormField(
                                   controller: _passwordController,
                                   decoration: const InputDecoration(
@@ -222,46 +244,55 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       : null,
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: _AuthTokens.spacingMedium),
                               SizedBox(
-                                height: 48,
+                                height: _AuthTokens.buttonHeight,
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   onPressed: _loading ? null : _signIn,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: green,
+                                    backgroundColor: AppColors.primary,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: BorderRadius.circular(
+                                        _AuthTokens.fieldRadius,
+                                      ),
                                     ),
                                   ),
                                   child: _loading
-                                      ? const CircularProgressIndicator(
-                                          color: Colors.white,
+                                      ? CircularProgressIndicator(
+                                          color: AppColors.onPrimary,
                                         )
                                       : const Text(
                                           'Masuk',
-                                          style: TextStyle(color: Colors.white),
+                                          style: TextStyle(
+                                            color: AppColors.onPrimary,
+                                          ),
                                         ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: _AuthTokens.spacingSmall),
                               SizedBox(
-                                height: 48,
+                                height: _AuthTokens.buttonHeight,
                                 width: double.infinity,
                                 child: OutlinedButton(
                                   onPressed: () => Navigator.of(
                                     context,
                                   ).pushNamed('/auth/register'),
                                   style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: green, width: 1.2),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                    side: BorderSide(
+                                      color: AppColors.primary,
+                                      width: 1.2,
                                     ),
-                                    backgroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        _AuthTokens.fieldRadius,
+                                      ),
+                                    ),
+                                    backgroundColor: AppColors.bg,
                                   ),
                                   child: Text(
                                     'Daftar Akun Baru',
-                                    style: TextStyle(color: green),
+                                    style: TextStyle(color: AppColors.primary),
                                   ),
                                 ),
                               ),
@@ -275,7 +306,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             Expanded(
                               child: Container(
                                 height: 1,
-                                color: const Color(0xFFE8F8F5),
+                                color: _AuthTokens.dividerColor,
                               ),
                             ),
                             const Padding(
@@ -288,7 +319,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             Expanded(
                               child: Container(
                                 height: 1,
-                                color: const Color(0xFFE8F8F5),
+                                color: _AuthTokens.dividerColor,
                               ),
                             ),
                           ],
