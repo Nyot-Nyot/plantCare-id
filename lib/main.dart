@@ -1,20 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'screens/auth/auth_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/supabase_client.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables from .env (if present). This file should
-  // contain SUPABASE_URL and SUPABASE_ANON_KEY. See docs/setup_supabase.md
-  // for instructions to create a Supabase project and obtain keys.
-  await dotenv.load(fileName: '.env');
+  // Try to load environment variables from .env. This file should
+  // contain SUPABASE_URL and SUPABASE_ANON_KEY. If the file is missing
+  // we catch the error and continue so the app can run in dev without
+  // crashing. See docs/setup_supabase.md for instructions to create a
+  // Supabase project and obtain keys.
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    // ignore: avoid_print
+    print(
+      'No .env file found in app assets. If you need Supabase integration, add a .env file at project root and include it under `flutter.assets` in pubspec.yaml, then rebuild.',
+    );
 
-  final supabaseUrl = dotenv.env['SUPABASE_URL'];
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
+    // Extra diagnostic: attempt to read the bundled asset (works only if .env was added to assets and app rebuilt)
+    try {
+      final content = await rootBundle.loadString('.env');
+      final hasUrl = content.contains('SUPABASE_URL=');
+      final hasKey = content.contains('SUPABASE_ANON_KEY=');
+      // ignore: avoid_print
+      print(
+        '.env bundled: true, has SUPABASE_URL: $hasUrl, has SUPABASE_ANON_KEY: $hasKey',
+      );
+    } catch (e2) {
+      // ignore: avoid_print
+      print(
+        '.env bundled: false or unreadable (not included in app assets): $e2',
+      );
+    }
+  }
+
+  String? supabaseUrl;
+  String? supabaseAnonKey;
+
+  // Accessing `dotenv.env` will throw if the package wasn't initialized
+  // (for example if `dotenv.load` failed). Guard that to avoid crashing
+  // the app at startup.
+  try {
+    supabaseUrl = dotenv.env['SUPABASE_URL'];
+    supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
+  } catch (e) {
+    // ignore: avoid_print
+    print('dotenv not initialized or error while reading .env: $e');
+  }
 
   if (supabaseUrl != null && supabaseAnonKey != null) {
     await SupabaseClientService.init(
@@ -43,7 +82,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: AppTheme.lightTheme,
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const SplashScreen(),
+      routes: {
+        '/auth': (ctx) => const AuthScreen(),
+        '/home': (ctx) => const MyHomePage(title: 'Flutter Demo Home Page'),
+      },
     );
   }
 }
