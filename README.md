@@ -98,7 +98,7 @@ Workflow ini berdasarkan docs di folder `docs/`. Ikuti langkah-langkah ini untuk
     berikan prompt:
 
     ```prompt
-    berdasarkan docs/sprint1/todo.md pada task 1, buat todo list dan kerjakan satu persatu. kemudian tandai setiap task yg sudah selesai di docs/sprint1/todo.md
+    berdasarkan docs/sprint1/todo.md pada task 1, buat todo list dan kerjakan satu persatu. kemudian tandai setiap task yg sudah selesai di docs/sprint1/todo.md. manfaatkan docs/ untuk memastikan setiap perubahan sesuai dan konsisten.
     ```
 
     - Test: Jalankan `flutter run`, pastikan app launch.

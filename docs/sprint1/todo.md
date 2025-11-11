@@ -38,10 +38,14 @@
 
 ### 4. Design System Tokens (Warna, Typography) di Flutter
 
--   [ ] Define color tokens in lib/theme/colors.dart (primary: #27AE60, etc.)
--   [ ] Define typography in lib/theme/text_styles.dart (headings, body)
--   [ ] Create ThemeData in lib/theme/app_theme.dart
--   [ ] Apply theme to MaterialApp
+-   [x] Define color tokens in lib/theme/colors.dart (primary: #27AE60, etc.)
+    -   Implemented AppColors with primary, secondary, background, surface, error and on-\* colors.
+-   [x] Define typography in lib/theme/text_styles.dart (headings, body)
+    -   Implemented AppTextStyles (h1, h2, body, caption).
+-   [x] Create ThemeData in lib/theme/app_theme.dart
+    -   Implemented AppTheme.lightTheme using color and typography tokens.
+-   [x] Apply theme to MaterialApp
+    -   Updated `lib/main.dart` to use `AppTheme.lightTheme`.
 
 ### 5. Basic UI: Splash Screen
 
