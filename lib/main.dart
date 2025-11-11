@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,8 +21,24 @@ Future<void> main() async {
   } catch (e) {
     // ignore: avoid_print
     print(
-      'No .env file found, continuing without it. Create one from .env.example if you need Supabase integration.',
+      'No .env file found in app assets. If you need Supabase integration, add a .env file at project root and include it under `flutter.assets` in pubspec.yaml, then rebuild.',
     );
+
+    // Extra diagnostic: attempt to read the bundled asset (works only if .env was added to assets and app rebuilt)
+    try {
+      final content = await rootBundle.loadString('.env');
+      final hasUrl = content.contains('SUPABASE_URL=');
+      final hasKey = content.contains('SUPABASE_ANON_KEY=');
+      // ignore: avoid_print
+      print(
+        '.env bundled: true, has SUPABASE_URL: $hasUrl, has SUPABASE_ANON_KEY: $hasKey',
+      );
+    } catch (e2) {
+      // ignore: avoid_print
+      print(
+        '.env bundled: false or unreadable (not included in app assets): $e2',
+      );
+    }
   }
 
   String? supabaseUrl;

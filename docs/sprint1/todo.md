@@ -60,7 +60,7 @@
 
 ### 6. Basic UI: Bottom Navigation Skeleton
 
--   [ ] Create lib/widgets/bottom_nav.dart with 5 tabs: Home, Identify, Collection, Guide, Profile
+-   [ ] Create lib/widgets/bottom_nav.dart with 5 tabs: Home, Identify, Collection, Profile
 -   [ ] Setup navigation with PageView or IndexedStack
 -   [ ] Placeholder screens for each tab
 
