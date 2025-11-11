@@ -1,5 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Local guest mode flag. When true the app treats the session as a local
+/// guest and avoids creating any accounts on Supabase. This is the preferred
+/// approach for demo/preview mode so we don't pollute the Supabase project
+/// with transient accounts.
+final guestModeProvider = StateProvider<bool>((ref) => false);
 
 /// Provides the current authenticated user as a Stream of User (or null).
 /// If Supabase is not initialized, the stream will emit `null`.
