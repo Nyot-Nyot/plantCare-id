@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/colors.dart';
 import '../../theme/text_styles.dart';
+import '../../widgets/decorated_field.dart';
 
 // Local sizing and spacing tokens for this screen — avoid magic numbers.
 class _AuthTokens {
@@ -22,26 +23,7 @@ class _AuthTokens {
   static const Color dividerColor = Color(0xFFE8F8F5);
 }
 
-// Small helper to render the rounded input background used across fields.
-class _DecoratedField extends StatelessWidget {
-  final Widget child;
-  const _DecoratedField({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: _AuthTokens.buttonHeight,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(_AuthTokens.fieldRadius),
-        border: Border.all(color: _AuthTokens.dividerColor, width: 1.2),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.centerLeft,
-      child: child,
-    );
-  }
-}
+// DecoratedField is now provided as a shared widget in lib/widgets/decorated_field.dart
 
 /// Auth screen redesigned to mirror the Figma layout: top hero image with
 /// gradient overlay, centered brand icon, title/subtitle, and a rounded
@@ -196,7 +178,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 ),
                               ),
                               const SizedBox(height: _AuthTokens.spacingSmall),
-                              _DecoratedField(
+                              DecoratedField(
+                                height: _AuthTokens.buttonHeight,
+                                radius: _AuthTokens.fieldRadius,
                                 child: TextFormField(
                                   controller: _emailController,
                                   decoration: const InputDecoration(
@@ -230,7 +214,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   ),
                                 ],
                               ),
-                              _DecoratedField(
+                              DecoratedField(
+                                height: _AuthTokens.buttonHeight,
+                                radius: _AuthTokens.fieldRadius,
                                 child: TextFormField(
                                   controller: _passwordController,
                                   decoration: const InputDecoration(

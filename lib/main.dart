@@ -4,7 +4,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'screens/auth/auth_screen.dart';
-import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/main_tabbed_screen.dart';
 import 'screens/splash_screen.dart';
@@ -88,7 +87,6 @@ class MyApp extends StatelessWidget {
       home: const SplashScreen(),
       routes: {
         '/auth': (ctx) => const AuthScreen(),
-        '/auth/login': (ctx) => const LoginScreen(),
         '/auth/register': (ctx) => const RegisterScreen(),
         '/home': (ctx) => const MainTabbedScreen(),
       },
