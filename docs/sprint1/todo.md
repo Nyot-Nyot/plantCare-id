@@ -68,10 +68,10 @@
 
 ### 7. Implementasi Login/Register/Guest Mode (Supabase Auth)
 
--   [ ] Create lib/screens/auth/login_screen.dart with email/password fields
--   [ ] Add register option and guest mode button
--   [ ] Integrate Supabase signIn/signUp methods
--   [ ] Handle auth state changes (redirect to home on success)
+-   [x] Create lib/screens/auth/login_screen.dart with email/password fields
+-   [x] Add register option and guest mode button
+-   [x] Integrate Supabase signIn/signUp methods
+-   [x] Handle auth state changes (redirect to home on success)
 
 ### 8. Welcome Screen dan Home Dashboard
 
