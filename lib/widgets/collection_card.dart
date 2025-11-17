@@ -24,10 +24,11 @@ class CollectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFECF0F1), width: 1.2),
+        border: Border.all(color: AppColors.surfaceBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            // Use withAlpha instead of withOpacity to avoid deprecation.
+            color: Colors.black.withAlpha((0.03 * 255).round()),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -40,7 +41,7 @@ class CollectionCard extends StatelessWidget {
           Container(
             height: 144,
             decoration: BoxDecoration(
-              color: const Color(0xFFF2F4F6),
+              color: AppColors.imageBg,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(24),
               ),

@@ -15,14 +15,18 @@ class HomeScreen extends ConsumerWidget {
     final asyncUser = ref.watch(authUserProvider);
     final isGuest = ref.watch(guestModeProvider);
 
-    String welcome = 'Halo, Tamu! 🌿';
-    asyncUser.whenData((user) {
-      if (user != null && user.email != null && user.email!.isNotEmpty) {
-        welcome = 'Halo, ${user.email}';
-      } else if (isGuest) {
-        welcome = 'Halo, Tamu! 🌿';
-      }
-    });
+    // Derive the welcome text declaratively from the provider state so the
+    // UI re-renders correctly when authentication state changes.
+    final String welcome = asyncUser.when(
+      data: (user) {
+        if (user != null && user.email != null && user.email!.isNotEmpty) {
+          return 'Halo, ${user.email}';
+        }
+        return isGuest ? 'Halo, Tamu! 🌿' : 'Halo, Tamu! 🌿';
+      },
+      loading: () => 'Halo, Tamu! 🌿',
+      error: (_, __) => 'Halo, Tamu! 🌿',
+    );
 
     return SafeArea(
       child: Scaffold(

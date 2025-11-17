@@ -46,7 +46,9 @@ class DashboardTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     // Keep the icon container background opacity consistent
                     // across all tiles so the icon block looks the same.
-                    color: Colors.white.withOpacity(0.12),
+                    // Converted opacity to alpha to follow Flutter guidance
+                    // (avoid .withOpacity deprecation).
+                    color: Colors.white.withAlpha((0.12 * 255).round()),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(icon, size: 28, color: iconColor),
@@ -61,7 +63,7 @@ class DashboardTile extends StatelessWidget {
                 Text(
                   subtitle,
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.onPrimary.withOpacity(0.9),
+                    color: AppColors.onPrimary.withAlpha((0.9 * 255).round()),
                   ),
                   textAlign: TextAlign.center,
                 ),
