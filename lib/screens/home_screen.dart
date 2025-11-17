@@ -19,8 +19,15 @@ class HomeScreen extends ConsumerWidget {
     // UI re-renders correctly when authentication state changes.
     final String welcome = asyncUser.when(
       data: (user) {
-        if (user != null && user.email != null && user.email!.isNotEmpty) {
-          return 'Halo, ${user.email}';
+        if (user != null) {
+          final metadata = user.userMetadata ?? {};
+          final username = (metadata['username'] as String?)?.trim();
+          if (username != null && username.isNotEmpty) {
+            return 'Halo, $username';
+          }
+          if (user.email != null && user.email!.isNotEmpty) {
+            return 'Halo, ${user.email}';
+          }
         }
         return isGuest ? 'Halo, Tamu! 🌿' : 'Halo, Tamu! 🌿';
       },
