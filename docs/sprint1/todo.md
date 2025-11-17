@@ -85,9 +85,9 @@ Welcome message uses `authUserProvider` and falls back to Guest when `guestModeP
 
 ### 9. Profile Screen Skeleton
 
--   [ ] Create lib/screens/profile_screen.dart
--   [ ] Add logout button and basic user info display
--   [ ] Placeholder for settings
+-   [x] Create lib/screens/profile_screen.dart
+-   [x] Add logout button and basic user info display
+-   [x] Placeholder for settings
 
 ### 10. Error Handling untuk Auth
 
