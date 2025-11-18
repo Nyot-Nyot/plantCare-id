@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class TestAuthRepository extends local.AuthRepository {
   TestAuthRepository() : super(SupabaseClient('', ''));
 
+  @override
   Future<T> callWithRetry<T>(
     Future<T> Function() fn, {
     int attempts = 2,
