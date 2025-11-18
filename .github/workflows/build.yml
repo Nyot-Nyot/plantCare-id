@@ -15,6 +15,16 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
+            - name: Create placeholder .env for CI
+              # Some developers keep .env out of the repo (contains secrets).
+              # The analyzer treats assets listed in pubspec.yaml as required and
+              # fails if they are missing. Create a minimal empty .env so CI
+              # can run analyze without leaking secrets.
+              run: |
+                  if [ ! -f .env ]; then
+                    printf "SUPABASE_URL=\nSUPABASE_ANON_KEY=\n" > .env
+                  fi
+
             - name: Set up Flutter
               uses: subosito/flutter-action@v2
               with:
