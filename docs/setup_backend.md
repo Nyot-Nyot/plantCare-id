@@ -28,3 +28,21 @@ Notes:
 
 -   Do not commit the virtual environment (`backend/.venv`) to git. Add it to `.gitignore` if needed.
 -   If you need to expose the backend to other devices, change `--host` to `0.0.0.0` and ensure firewall rules allow it.
+
+Environment and API keys
+
+-   Copy `.env.example` to `.env` at the repository root and fill the values. Do NOT commit your real `.env` file with secrets.
+-   Required placeholders added to `.env.example`:
+    -   `SUPABASE_URL` and `SUPABASE_ANON_KEY` (Supabase project)
+    -   `PLANT_ID_API_KEY` (Plant.id API key — get one from https://admin.kindwise.com/)
+    -   `ORCHESTRATOR_URL` (backend base URL, e.g. `http://localhost:8001`)
+
+Example (fish):
+
+```fish
+cp .env.example .env
+# Edit .env and fill real keys
+printf "PLANT_ID_API_KEY=your_real_key\n" >> .env
+```
+
+For local testing without real API keys, use a mock endpoint for `ORCHESTRATOR_URL` and update `identifyService` to point to the mock.

@@ -24,8 +24,8 @@ _Catatan:_ Berdasarkan `docs/sprint-planning.md` dan `docs/epics.md`, Sprint 2 f
 
 ### 1. Environment & config (0.5 - 1h)
 
-[ ] Tambah placeholder API keys di `.env.example`: PLANT_ID_API_KEY, ORCHESTRATOR_URL (0.25h)
-[ ] Perbarui README/docs singkat cara menambahkan API keys dan environment untuk dev (0.25-0.5h)
+[x] Tambah placeholder API keys di `.env.example`: PLANT_ID_API_KEY, ORCHESTRATOR_URL (0.25h)
+[x] Perbarui README/docs singkat cara menambahkan API keys dan environment untuk dev (0.25-0.5h)
 
 Acceptance criteria:
 
