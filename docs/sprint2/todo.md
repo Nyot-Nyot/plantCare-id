@@ -45,6 +45,8 @@ Acceptance criteria:
 -   User dapat mengambil foto dan memilih dari galeri.
 -   UI menunjukkan overlay tips; ada opsi retake/submit.
 
+### 3. Client — Image validation & compression (3-4h)
+
 [ ] Validasi: ukuran file, dimensions minimal (800px recommended; prefer >=1024px for best accuracy), mime type (image/\*) (0.5h)
 [ ] Compression pipeline (target <2MB, configurable) + preserve aspect ratio (1-1.5h)
 [ ] UX: tampilkan pesan error yang jelas jika invalid; berikan opsi retry atau pilih foto lain (0.5h)
@@ -52,6 +54,8 @@ Acceptance criteria:
 Acceptance criteria:
 
 -   Gambar dikompresi dan tervalidasi; user tidak bisa submit image invalid.
+
+### 4. Backend — Orchestrator endpoint for Plant.id (4-6h)
 
 [ ] Tambah endpoint POST `/identify` di `backend/main.py` atau modul orchestrator: - Terima multipart image atau image_url - Return JSON terstruktur (id, common_name, scientific_name, confidence, provider, raw_response)
 [ ] Integrasi ke Plant.id API; implement retry/backoff and clear error handling jika Plant.id gagal (2-3h)
@@ -74,7 +78,7 @@ Acceptance criteria:
 
 -   Upload berhasil memicu result screen; errors ditangani dengan pesan yang jelas.
 
-[### 6. Client — Identify Result screen (3-4h)
+### 6. Client — Identify Result screen (3-4h)
 
 [ ] Buat `IdentifyResultScreen` menampilkan: - Thumbnail image - Common name & scientific name - Confidence score (progress bar + numeric) - Provider badge (Plant.id) - Top suggestions (jika available)
 [ ] Tindakan: Save to collection, View guide (placeholder), Retake (1.5-2h)
