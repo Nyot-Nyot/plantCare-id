@@ -5,7 +5,9 @@ import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 
 import '../services/camera_service.dart';
 
@@ -115,8 +117,9 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     );
   }
 
-  /// Shared helper to handle picked/captured files: shows loading, validates image and
-  /// sets `_pickedFile` when valid. `picker` should return an `XFile?` or null when cancelled.
+  /// Shared helper to handle picked/captured files: shows loading, validates image,
+  /// runs compression pipeline if needed, and sets `_pickedFile` when valid.
+  /// `picker` should return an `XFile?` or null when cancelled.
   Future<void> _withPickedFile(
     Future<XFile?> Function() picker, {
     String? cancelMessage,
@@ -129,13 +132,71 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
         if (cancelMessage != null) _showMessage(cancelMessage);
         return;
       }
-      final ok = await _validateImage(file);
-      if (ok && mounted) setState(() => _pickedFile = file);
+
+      // Basic mime/type check and dimension validation first.
+      final mime = lookupMimeType(file.path);
+      if (mime == null || !mime.startsWith('image/')) {
+        _showMessage('Tipe file tidak didukung. Pilih gambar (jpg/png/webp).');
+        return;
+      }
+
+      final dimsOk = await _validateImage(file);
+      if (!dimsOk) return;
+
+      // Attempt to compress to target size (< 2MB). If compression is not
+      // needed, _compressIfNeeded will return the original file.
+      final XFile finalFile = await _compressIfNeeded(file);
+
+      // Final size check
+      final int finalSize = await finalFile.length();
+      const int targetBytes = 2 * 1024 * 1024;
+      if (finalSize > targetBytes) {
+        _showMessage(
+          'Gagal mengompresi gambar agar kurang dari 2MB. Pilih foto lain.',
+        );
+        return;
+      }
+
+      if (mounted) setState(() => _pickedFile = finalFile);
     } catch (e) {
       _showMessage('Gagal memilih foto: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Compresses the provided [file] if it exceeds the target size. Returns
+  /// the original file if no compression was needed, or a new `XFile` pointing
+  /// to a temporary compressed file.
+  Future<XFile> _compressIfNeeded(XFile file) async {
+    final int size = await file.length();
+    const int targetBytes = 2 * 1024 * 1024; // 2MB
+    if (size <= targetBytes) return file;
+
+    // Try progressively lower quality steps until we meet target or hit floor.
+    int quality = 90;
+    Uint8List? compressed;
+    while (quality >= 30) {
+      compressed = await FlutterImageCompress.compressWithFile(
+        file.path,
+        quality: quality,
+        keepExif: true,
+      );
+      if (compressed == null) break;
+      if (compressed.lengthInBytes <= targetBytes) break;
+      quality -= 10;
+    }
+
+    if (compressed == null) {
+      // Compression failed — return original so caller can decide what to do.
+      return file;
+    }
+
+    final tmp = File(
+      '${Directory.systemTemp.path}/plantcare_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+    await tmp.writeAsBytes(compressed);
+    return XFile(tmp.path);
   }
 
   Future<void> _switchCamera() async {
@@ -187,17 +248,26 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
 
   Future<bool> _validateImage(XFile file) async {
     try {
-      final int size = await file.length();
-      const int maxSize = 5 * 1024 * 1024;
-      if (size > maxSize) {
-        _showMessage('File terlalu besar (>5MB).');
-        return false;
-      }
-
       final Uint8List bytes = await file.readAsBytes();
       final ui.Image img = await _decodeImageFromList(bytes);
       const int minDim = 800;
-      if (img.width < minDim || img.height < minDim) {
+
+      // Debug: print image info to help diagnose devices that return
+      // unexpected dimensions.
+      // Example output: "validateImage: /tmp/.. size=123456 width=1080 height=1920"
+      try {
+        final int size = bytes.lengthInBytes;
+        // Use debugPrint so logs are visible in flutter run output.
+        debugPrint(
+          'validateImage: ${file.path} size=$size width=${img.width} height=${img.height}',
+        );
+      } catch (_) {}
+
+      // Accept the image if at least one dimension meets the minimum.
+      // Previously we rejected when either side < minDim (AND semantics were
+      // accidental); that could incorrectly reject portrait images where the
+      // short side is < minDim but the long side is large enough.
+      if (img.width < minDim && img.height < minDim) {
         _showMessage('Resolusi gambar terlalu kecil (min ${minDim}px).');
         return false;
       }
