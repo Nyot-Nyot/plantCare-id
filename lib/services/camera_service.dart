@@ -19,11 +19,12 @@ class CameraService {
   /// Returns cached cameras or queries them if not initialized yet.
   static Future<List<CameraDescription>> ensureInitialized() async {
     if (_cached != null) return _cached!;
-    try {
-      _cached = await availableCameras();
-    } catch (_) {
-      _cached = <CameraDescription>[];
-    }
+
+    // Delegate to init() to avoid duplicating the availableCameras call
+    // and its error handling. init() will populate `_cached` (possibly
+    // with an empty list on error), so we can return the cached value
+    // afterwards.
+    await init();
     return _cached!;
   }
 
