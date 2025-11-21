@@ -6,6 +6,7 @@ import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import '../widgets/collection_card.dart';
 import '../widgets/dashboard_tile.dart';
+import 'camera_capture_screen_v2.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -68,6 +69,16 @@ class HomeScreen extends ConsumerWidget {
                         title: 'Kenali\nTanaman',
                         subtitle: 'Ambil foto tanaman',
                         background: AppColors.primary,
+                        onTap: () async {
+                          // Open the in-app camera screen. We don't require the
+                          // result here, but callers may return an XFile when
+                          // the user confirms a photo.
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CameraCaptureScreenV2(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
