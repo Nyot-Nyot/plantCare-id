@@ -27,6 +27,7 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   bool _loading = false;
   bool _openedOnStart = false;
   FlashMode _flashMode = FlashMode.off;
+  static const int _kTargetBytes = 2 * 1024 * 1024; // 2MB
 
   @override
   void initState() {
@@ -149,8 +150,7 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
 
       // Final size check
       final int finalSize = await finalFile.length();
-      const int targetBytes = 2 * 1024 * 1024;
-      if (finalSize > targetBytes) {
+      if (finalSize > _kTargetBytes) {
         _showMessage(
           'Gagal mengompresi gambar agar kurang dari 2MB. Pilih foto lain.',
         );
@@ -169,9 +169,8 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   /// the original file if no compression was needed, or a new `XFile` pointing
   /// to a temporary compressed file.
   Future<XFile> _compressIfNeeded(XFile file) async {
-    final int size = await file.length();
-    const int targetBytes = 2 * 1024 * 1024; // 2MB
-    if (size <= targetBytes) return file;
+  final int size = await file.length();
+  if (size <= _kTargetBytes) return file;
 
     // Try progressively lower quality steps until we meet target or hit floor.
     int quality = 90;
@@ -182,8 +181,8 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
         quality: quality,
         keepExif: true,
       );
-      if (compressed == null) break;
-      if (compressed.lengthInBytes <= targetBytes) break;
+  if (compressed == null) break;
+  if (compressed.lengthInBytes <= _kTargetBytes) break;
       quality -= 10;
     }
 
