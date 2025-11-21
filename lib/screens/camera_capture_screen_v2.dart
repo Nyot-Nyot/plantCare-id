@@ -27,6 +27,12 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   bool _loading = false;
   bool _openedOnStart = false;
   FlashMode _flashMode = FlashMode.off;
+  // Track temporary files created by the compression pipeline so we can
+  // delete them when they're no longer needed (retake / close without use).
+  final Set<String> _tempFiles = <String>{};
+  // When the user chooses "Use" we should preserve temp files (caller is
+  // now responsible). Set this flag before popping the route.
+  bool _preserveTempOnPop = false;
   static const int _kTargetBytes = 2 * 1024 * 1024; // 2MB
   static const int _kInitialCompressQuality = 90;
   static const int _kMinCompressQuality = 30;
@@ -154,6 +160,16 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       // Final size check
       final int finalSize = await finalFile.length();
       if (finalSize > _kTargetBytes) {
+        // If the compression created a temporary file, delete it — it didn't
+        // meet the target and we shouldn't leave its artifact behind.
+        try {
+          if (_tempFiles.contains(finalFile.path)) {
+            final f = File(finalFile.path);
+            if (await f.exists()) await f.delete();
+            _tempFiles.remove(finalFile.path);
+          }
+        } catch (_) {}
+
         _showMessage(
           'Gagal mengompresi gambar agar kurang dari 2MB. Pilih foto lain.',
         );
@@ -219,6 +235,11 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       '${Directory.systemTemp.path}/plantcare_${DateTime.now().millisecondsSinceEpoch}$outExt',
     );
     await tmp.writeAsBytes(compressed);
+    // Register this temporary file so we can clean it up later if the user
+    // doesn't keep the image (retake / close without using).
+    try {
+      _tempFiles.add(tmp.path);
+    } catch (_) {}
     return XFile(tmp.path);
   }
 
@@ -265,6 +286,14 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
 
   @override
   void dispose() {
+    // If the user did not accept the image (didn't press Use), clean up
+    // any temporary files we created during compression.
+    if (!_preserveTempOnPop) {
+      // Fire-and-forget cleanup; don't block dispose. We try best-effort
+      // to remove temp files.
+      _cleanupTempFiles();
+    }
+
     _cameraController?.dispose();
     super.dispose();
   }
@@ -309,12 +338,27 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   }
 
   void _retake() {
+    _retakeAsync();
+  }
+
+  Future<void> _retakeAsync() async {
     if (!mounted) return;
+    // If the currently picked file is one of our temp files, delete it.
+    try {
+      if (_pickedFile != null && _tempFiles.contains(_pickedFile!.path)) {
+        final f = File(_pickedFile!.path);
+        if (await f.exists()) await f.delete();
+        _tempFiles.remove(_pickedFile!.path);
+      }
+    } catch (_) {}
+
     // Reset to camera preview and let the user re-frame the shot.
-    setState(() {
-      _pickedFile = null;
-      _loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _pickedFile = null;
+        _loading = false;
+      });
+    }
   }
 
   void _showMessage(String message) {
@@ -322,6 +366,26 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
+  }
+
+  /// Delete a tracked temp file if it exists and remove it from tracking.
+  Future<void> _deleteTempFileIfTracked(String path) async {
+    try {
+      if (_tempFiles.contains(path)) {
+        final f = File(path);
+        if (await f.exists()) await f.delete();
+        _tempFiles.remove(path);
+      }
+    } catch (_) {}
+  }
+
+  /// Attempt to clean up all tracked temporary files. This is safe to call
+  /// multiple times; files already removed will be skipped.
+  Future<void> _cleanupTempFiles() async {
+    final tracked = List<String>.from(_tempFiles);
+    for (final p in tracked) {
+      await _deleteTempFileIfTracked(p);
+    }
   }
 
   @override
@@ -666,7 +730,12 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
                 label: const Text('Retake'),
               ),
               ElevatedButton.icon(
-                onPressed: () => Navigator.of(context).pop(_pickedFile),
+                onPressed: () {
+                  // Preserve temp files since the caller will receive the
+                  // selected file and is responsible for storing/cleaning it.
+                  _preserveTempOnPop = true;
+                  Navigator.of(context).pop(_pickedFile);
+                },
                 icon: const Icon(Icons.check),
                 label: const Text('Use'),
               ),
