@@ -28,6 +28,9 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   bool _openedOnStart = false;
   FlashMode _flashMode = FlashMode.off;
   static const int _kTargetBytes = 2 * 1024 * 1024; // 2MB
+  static const int _kInitialCompressQuality = 90;
+  static const int _kMinCompressQuality = 30;
+  static const int _kCompressStep = 10;
 
   @override
   void initState() {
@@ -169,21 +172,21 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   /// the original file if no compression was needed, or a new `XFile` pointing
   /// to a temporary compressed file.
   Future<XFile> _compressIfNeeded(XFile file) async {
-  final int size = await file.length();
-  if (size <= _kTargetBytes) return file;
+    final int size = await file.length();
+    if (size <= _kTargetBytes) return file;
 
     // Try progressively lower quality steps until we meet target or hit floor.
-    int quality = 90;
+    int quality = _kInitialCompressQuality;
     Uint8List? compressed;
-    while (quality >= 30) {
+    while (quality >= _kMinCompressQuality) {
       compressed = await FlutterImageCompress.compressWithFile(
         file.path,
         quality: quality,
         keepExif: true,
       );
-  if (compressed == null) break;
-  if (compressed.lengthInBytes <= _kTargetBytes) break;
-      quality -= 10;
+      if (compressed == null) break;
+      if (compressed.lengthInBytes <= _kTargetBytes) break;
+      quality -= _kCompressStep;
     }
 
     if (compressed == null) {
