@@ -47,9 +47,9 @@ Acceptance criteria:
 
 ### 3. Client — Image validation & compression (3-4h)
 
-[ ] Validasi: ukuran file, dimensions minimal (800px recommended; prefer >=1024px for best accuracy), mime type (image/\*) (0.5h)
-[ ] Compression pipeline (target <2MB, configurable) + preserve aspect ratio (1-1.5h)
-[ ] UX: tampilkan pesan error yang jelas jika invalid; berikan opsi retry atau pilih foto lain (0.5h)
+[x] Validasi: mime type (image/\*) dan dimensions minimal (min 800px; prefer >=1024px) — implemented in `lib/screens/camera_capture_screen_v2.dart` (0.5h)
+[x] Compression pipeline (target <2MB, configurable) + preserve aspect ratio — implemented using `flutter_image_compress` (1-1.5h)
+[x] UX: tampilkan pesan error yang jelas jika invalid; berikan opsi retry atau pilih foto lain — messages surfaced via SnackBar in camera flow (0.5h)
 
 Acceptance criteria:
 

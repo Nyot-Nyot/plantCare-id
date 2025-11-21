@@ -8,6 +8,7 @@ class DashboardTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color background;
+  final VoidCallback? onTap;
 
   const DashboardTile({
     super.key,
@@ -15,6 +16,7 @@ class DashboardTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.background,
+    this.onTap,
   });
 
   @override
@@ -31,7 +33,7 @@ class DashboardTile extends StatelessWidget {
         elevation: 2,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {},
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               vertical: 16.0,

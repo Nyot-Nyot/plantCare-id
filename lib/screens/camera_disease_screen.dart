@@ -11,15 +11,17 @@ import 'package:mime/mime.dart';
 
 import '../services/camera_service.dart';
 
-/// Full-screen camera capture screen (v2).
-class CameraCaptureScreenV2 extends StatefulWidget {
-  const CameraCaptureScreenV2({super.key});
+/// Camera screen tailored for disease checking ("Cek Penyakit").
+/// Visuals are aligned with the provided Figma node: centered yellow
+/// pill title, dark background, corner brackets and square capture control.
+class CameraDiseaseScreen extends StatefulWidget {
+  const CameraDiseaseScreen({super.key});
 
   @override
-  State<CameraCaptureScreenV2> createState() => _CameraCaptureScreenV2State();
+  State<CameraDiseaseScreen> createState() => _CameraDiseaseScreenState();
 }
 
-class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
+class _CameraDiseaseScreenState extends State<CameraDiseaseScreen> {
   final ImagePicker _picker = ImagePicker();
   CameraController? _cameraController;
   bool _cameraInitialized = false;
@@ -27,16 +29,14 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   bool _loading = false;
   bool _openedOnStart = false;
   FlashMode _flashMode = FlashMode.off;
-  // Track temporary files created by the compression pipeline so we can
-  // delete them when they're no longer needed (retake / close without use).
-  final Set<String> _tempFiles = <String>{};
-  // When the user chooses "Use" we should preserve temp files (caller is
-  // now responsible). Set this flag before popping the route.
-  bool _preserveTempOnPop = false;
+
   static const int _kTargetBytes = 2 * 1024 * 1024; // 2MB
   static const int _kInitialCompressQuality = 90;
   static const int _kMinCompressQuality = 30;
   static const int _kCompressStep = 10;
+
+  final Set<String> _tempFiles = <String>{};
+  bool _preserveTempOnPop = false;
 
   @override
   void initState() {
@@ -76,9 +76,7 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
 
   Future<void> _takePhoto() async {
     if (!mounted) return;
-    // If camera preview is available, capture using in-app camera controller.
     if (_cameraController != null && _cameraInitialized) {
-      // Use shared helper to handle loading, validation and state update.
       await _withPickedFile(
         () async => await _cameraController!.takePicture(),
         cancelMessage: 'Kamera dibatalkan',
@@ -86,7 +84,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       return;
     }
 
-    // Fallback: open native camera once if controller isn't available.
     await _withPickedFile(
       () async =>
           await _picker.pickImage(source: ImageSource.camera, imageQuality: 90),
@@ -95,18 +92,13 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
   }
 
   Future<void> _toggleFlash() async {
-    // Determine the new flash mode once and reuse it. This keeps the
-    // toggle logic consistent whether or not a camera controller exists.
     final newMode = _flashMode == FlashMode.off
         ? FlashMode.torch
         : FlashMode.off;
-
     if (_cameraController == null) {
-      // No controller yet; just update the desired flash mode locally.
       setState(() => _flashMode = newMode);
       return;
     }
-
     try {
       await _cameraController!.setFlashMode(newMode);
       if (!mounted) return;
@@ -127,9 +119,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     );
   }
 
-  /// Shared helper to handle picked/captured files: shows loading, validates image,
-  /// runs compression pipeline if needed, and sets `_pickedFile` when valid.
-  /// `picker` should return an `XFile?` or null when cancelled.
   Future<void> _withPickedFile(
     Future<XFile?> Function() picker, {
     String? cancelMessage,
@@ -143,7 +132,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
         return;
       }
 
-      // Basic mime/type check and dimension validation first.
       final mime = lookupMimeType(file.path);
       if (mime == null || !mime.startsWith('image/')) {
         _showMessage('Tipe file tidak didukung. Pilih gambar (jpg/png/webp).');
@@ -153,15 +141,9 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       final dimsOk = await _validateImage(file);
       if (!dimsOk) return;
 
-      // Attempt to compress to target size (< 2MB). If compression is not
-      // needed, _compressIfNeeded will return the original file.
       final XFile finalFile = await _compressIfNeeded(file);
-
-      // Final size check
       final int finalSize = await finalFile.length();
       if (finalSize > _kTargetBytes) {
-        // If the compression created a temporary file, delete it — it didn't
-        // meet the target and we shouldn't leave its artifact behind.
         try {
           if (_tempFiles.contains(finalFile.path)) {
             final f = File(finalFile.path);
@@ -184,18 +166,10 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     }
   }
 
-  /// Compresses the provided [file] if it exceeds the target size. Returns
-  /// the original file if no compression was needed, or a new `XFile` pointing
-  /// to a temporary compressed file.
   Future<XFile> _compressIfNeeded(XFile file) async {
     final int size = await file.length();
     if (size <= _kTargetBytes) return file;
 
-    // Try progressively lower quality steps until we meet target or hit floor.
-    // Preserve the original image format when possible. Note: converting
-    // formats (e.g., PNG -> JPEG) may lose transparency; we prefer to keep
-    // the original format so callers that rely on alpha channels are not
-    // surprised.
     final String? mime = lookupMimeType(file.path);
     CompressFormat format = CompressFormat.jpeg;
     String outExt = '.jpg';
@@ -226,17 +200,12 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       quality -= _kCompressStep;
     }
 
-    if (compressed == null) {
-      // Compression failed — return original so caller can decide what to do.
-      return file;
-    }
+    if (compressed == null) return file;
 
     final tmp = File(
-      '${Directory.systemTemp.path}/plantcare_${DateTime.now().millisecondsSinceEpoch}$outExt',
+      '${Directory.systemTemp.path}/plantcare_disease_${DateTime.now().millisecondsSinceEpoch}$outExt',
     );
     await tmp.writeAsBytes(compressed);
-    // Register this temporary file so we can clean it up later if the user
-    // doesn't keep the image (retake / close without using).
     try {
       _tempFiles.add(tmp.path);
     } catch (_) {}
@@ -254,17 +223,13 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       );
       if (other.name == current.name) return;
 
-      // Show loading indicator while switching cameras.
-      // Mark camera as uninitialized so UI shows the "Memulai kamera..." state.
       setState(() {
         _cameraInitialized = false;
         _loading = true;
       });
 
-      // Dispose the old controller, but keep the reference until we replace it
       await _cameraController!.dispose();
 
-      // Create and initialize new controller
       _cameraController = CameraController(
         other,
         ResolutionPreset.high,
@@ -278,7 +243,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
         _loading = false;
       });
     } catch (e) {
-      // Reset loading state on error and surface message
       if (mounted) setState(() => _loading = false);
       _showMessage('Gagal mengganti kamera: $e');
     }
@@ -286,14 +250,9 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
 
   @override
   void dispose() {
-    // If the user did not accept the image (didn't press Use), clean up
-    // any temporary files we created during compression.
     if (!_preserveTempOnPop) {
-      // Fire-and-forget cleanup; don't block dispose. We try best-effort
-      // to remove temp files.
       _cleanupTempFiles();
     }
-
     _cameraController?.dispose();
     super.dispose();
   }
@@ -303,27 +262,17 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       final Uint8List bytes = await file.readAsBytes();
       final ui.Image img = await _decodeImageFromList(bytes);
       const int minDim = 800;
-
-      // Debug: print image info to help diagnose devices that return
-      // unexpected dimensions.
-      // Example output: "validateImage: /tmp/.. size=123456 width=1080 height=1920"
       try {
         final int size = bytes.lengthInBytes;
-        // Use debugPrint so logs are visible in flutter run output.
         debugPrint(
           'validateImage: ${file.path} size=$size width=${img.width} height=${img.height}',
         );
       } catch (_) {}
 
-      // Accept the image if at least one dimension meets the minimum.
-      // Previously we rejected when either side < minDim (AND semantics were
-      // accidental); that could incorrectly reject portrait images where the
-      // short side is < minDim but the long side is large enough.
       if (img.width < minDim && img.height < minDim) {
         _showMessage('Resolusi gambar terlalu kecil (min ${minDim}px).');
         return false;
       }
-
       return true;
     } catch (_) {
       _showMessage('Validasi gambar gagal');
@@ -337,13 +286,10 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     return completer.future;
   }
 
-  void _retake() {
-    _retakeAsync();
-  }
+  void _retake() => _retakeAsync();
 
   Future<void> _retakeAsync() async {
     if (!mounted) return;
-    // If the currently picked file is one of our temp files, delete it.
     try {
       if (_pickedFile != null && _tempFiles.contains(_pickedFile!.path)) {
         final f = File(_pickedFile!.path);
@@ -352,7 +298,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
       }
     } catch (_) {}
 
-    // Reset to camera preview and let the user re-frame the shot.
     if (mounted) {
       setState(() {
         _pickedFile = null;
@@ -368,7 +313,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     );
   }
 
-  /// Delete a tracked temp file if it exists and remove it from tracking.
   Future<void> _deleteTempFileIfTracked(String path) async {
     try {
       if (_tempFiles.contains(path)) {
@@ -379,8 +323,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     } catch (_) {}
   }
 
-  /// Attempt to clean up all tracked temporary files. This is safe to call
-  /// multiple times; files already removed will be skipped.
   Future<void> _cleanupTempFiles() async {
     final tracked = List<String>.from(_tempFiles);
     for (final p in tracked) {
@@ -403,7 +345,8 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
                         : _cameraPlaceholder())
                   : _buildPreview(),
             ),
-            // Top bar (close, title pill, flash) with subtle gradient like Figma
+
+            // Top bar with centered yellow pill
             Positioned(
               top: 0,
               left: 0,
@@ -436,12 +379,15 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF27AE60),
+                          color: const Color(0xFFF2C94C),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
-                          '🌿 Kenali Tanaman',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          '🔍 Cek Penyakit',
+                          style: TextStyle(
+                            color: Color(0xFF2C3E50),
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -459,7 +405,7 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
               ),
             ),
 
-            // Guide text positioned under the top bar
+            // Guide text
             Positioned(
               top: MediaQuery.of(context).padding.top + 76,
               left: 0,
@@ -471,19 +417,18 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color.fromRGBO(0, 0, 0, 0.45),
+                    color: const Color.fromRGBO(0, 0, 0, 0.6),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
-                    'Pastikan cahaya cukup dan fokus pada daun',
+                    'Foto bagian daun atau batang yang sakit',
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ),
               ),
             ),
 
-            // Camera initialization indicator (in-app). Shows while the
-            // CameraController exists but hasn't finished initializing.
+            // Camera initializing placeholder
             if (_pickedFile == null &&
                 _cameraController != null &&
                 !_cameraInitialized)
@@ -502,94 +447,58 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
                   ),
                 ),
               ),
+
+            // Bottom controls
             if (_pickedFile == null)
-              // Responsive controls: bottom row in portrait, vertical side column in landscape
               Positioned.fill(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isPortrait =
-                        MediaQuery.of(context).orientation ==
-                        Orientation.portrait;
-                    if (isPortrait) {
-                      return Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Container(
-                          height: 136,
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [
-                                Color.fromRGBO(0, 0, 0, 0.9),
-                                Color.fromRGBO(0, 0, 0, 0.0),
-                              ],
-                            ),
-                          ),
-                          child: SafeArea(
-                            top: false,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: 12.0,
-                                left: 20,
-                                right: 20,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _iconButton(
-                                    icon: Icons.photo_library,
-                                    onPressed: _chooseFromGallery,
-                                  ),
-                                  _captureButton(),
-                                  _iconButton(
-                                    icon: Icons.cameraswitch,
-                                    onPressed: _switchCamera,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: 136,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Color.fromRGBO(0, 0, 0, 0.9),
+                          Color.fromRGBO(0, 0, 0, 0.0),
+                        ],
+                      ),
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: 12.0,
+                          left: 20,
+                          right: 20,
                         ),
-                      );
-                    } else {
-                      // Landscape: vertical controls on the right side
-                      return Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 12.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _iconButton(
-                                icon: Icons.photo_library,
-                                onPressed: _chooseFromGallery,
-                              ),
-                              const SizedBox(height: 20),
-                              _captureButton(),
-                              const SizedBox(height: 20),
-                              _iconButton(
-                                icon: Icons.cameraswitch,
-                                onPressed: _switchCamera,
-                              ),
-                            ],
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _iconButton(
+                              icon: Icons.photo_library,
+                              onPressed: _chooseFromGallery,
+                            ),
+                            _squareCaptureButton(),
+                            _iconButton(
+                              icon: Icons.cameraswitch,
+                              onPressed: _switchCamera,
+                            ),
+                          ],
                         ),
-                      );
-                    }
-                  },
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            // Frame brackets overlay: center a framed area and draw four corner brackets
+
+            // Frame brackets (center)
             if (_pickedFile == null)
               Positioned.fill(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final isPortrait =
-                        MediaQuery.of(context).orientation ==
-                        Orientation.portrait;
-                    final frameHeight =
-                        constraints.maxHeight * (isPortrait ? 0.45 : 0.6);
+                    final frameHeight = constraints.maxHeight * 0.45;
                     const sideOffset = 40.0;
                     final topOffset = (constraints.maxHeight - frameHeight) / 2;
                     final bottomOffset =
@@ -627,41 +536,30 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
     );
   }
 
-  Widget _cameraPlaceholder() {
-    return Container(
-      color: Colors.black,
-      child: Stack(
-        children: [
-          // Empty center — actual guide text is positioned above the preview
-          // as an overlay to avoid obstructing the camera view. The frame
-          // brackets are rendered as overlays in the main build so they
-          // remain visible whether the preview or placeholder is shown.
-        ],
-      ),
-    );
-  }
+  Widget _cameraPlaceholder() => Container(color: Colors.black);
 
-  Widget _captureButton() {
+  // Circular capture button (outer ring + inner filled circle)
+  Widget _squareCaptureButton() {
     return GestureDetector(
       onTap: _loading ? null : _takePhoto,
       child: Container(
-        width: 92,
-        height: 92,
+        width: 84,
+        height: 84,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: const Color.fromRGBO(0, 0, 0, 0.4),
-              blurRadius: 8,
+              color: const Color.fromRGBO(0, 0, 0, 0.35),
+              blurRadius: 6,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Center(
           child: Container(
-            width: 56,
-            height: 56,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: Colors.grey[900],
               shape: BoxShape.circle,
@@ -731,8 +629,6 @@ class _CameraCaptureScreenV2State extends State<CameraCaptureScreenV2> {
               ),
               ElevatedButton.icon(
                 onPressed: () {
-                  // Preserve temp files since the caller will receive the
-                  // selected file and is responsible for storing/cleaning it.
                   _preserveTempOnPop = true;
                   Navigator.of(context).pop(_pickedFile);
                 },

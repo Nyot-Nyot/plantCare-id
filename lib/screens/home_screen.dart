@@ -6,6 +6,8 @@ import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import '../widgets/collection_card.dart';
 import '../widgets/dashboard_tile.dart';
+import 'camera_capture_screen_v2.dart';
+import 'camera_disease_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -13,18 +15,13 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncUser = ref.watch(authUserProvider);
-    // guest mode is observable from providers when needed elsewhere
 
-    // Derive the welcome text declaratively from the provider state so the
-    // UI re-renders correctly when authentication state changes.
     final String welcome = asyncUser.when(
       data: (user) {
         if (user != null) {
           final metadata = user.userMetadata ?? {};
           final username = (metadata['username'] as String?)?.trim();
-          if (username != null && username.isNotEmpty) {
-            return 'Halo, $username';
-          }
+          if (username != null && username.isNotEmpty) return 'Halo, $username';
           if (user.email != null && user.email!.isNotEmpty) {
             return 'Halo, ${user.email}';
           }
@@ -68,6 +65,13 @@ class HomeScreen extends ConsumerWidget {
                         title: 'Kenali\nTanaman',
                         subtitle: 'Ambil foto tanaman',
                         background: AppColors.primary,
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CameraCaptureScreenV2(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -77,6 +81,13 @@ class HomeScreen extends ConsumerWidget {
                         title: 'Cek Penyakit',
                         subtitle: 'Deteksi masalah',
                         background: AppColors.accent,
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CameraDiseaseScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
